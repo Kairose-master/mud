@@ -102,7 +102,7 @@ export function useDirectorTarget(events: WorldEvent[], holdMs = 6000): { x: num
   }, []);
   return useMemo(() => {
     const recent = events.find((e) => e.tile && now - e.at < holdMs);
-    if (recent?.tile) return { x: recent.tile.x, z: recent.tile.z, zoom: 11 };
+    if (recent?.tile) return { x: recent.tile.x, z: recent.tile.z, zoom: 14 };
     return { x: 0, z: 0, zoom: 30 };
   }, [events, now, holdMs]);
 }

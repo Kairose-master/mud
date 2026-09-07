@@ -86,6 +86,8 @@ side's test goes red — that is the contract between the two repos.
 
 ## Economy simulator & recording (YouTube episodes)
 
+![A frame from a recorded bust episode: director camera, on-chain ticker, market panel](docs/director.png)
+
 ```sh
 scripts/episode.sh boom                    # fresh chain, deploy, build, film, summarise
 scripts/episode.sh bust --ticks 120 --tick-ms 1000

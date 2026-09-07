@@ -70,10 +70,15 @@ export type FeedState =
   | { status: "ok"; feed: FrontierFeed; error: null }
   | { status: "error"; feed: FrontierFeed | null; error: string };
 
-export function useHandselFeed(intervalMs = 30_000): FeedState {
+/** `enabled = false` (a simulated world) skips the fetch entirely: synthetic jobs have no Handsel text. */
+export function useHandselFeed(intervalMs = 30_000, enabled = true): FeedState {
   const [state, setState] = useState<FeedState>({ status: "idle", feed: null, error: null });
 
   useEffect(() => {
+    if (!enabled) {
+      setState({ status: "idle", feed: null, error: null });
+      return;
+    }
     let cancelled = false;
     let last: FrontierFeed | null = null;
     const tick = async () => {
@@ -96,7 +101,7 @@ export function useHandselFeed(intervalMs = 30_000): FeedState {
       cancelled = true;
       clearInterval(id);
     };
-  }, [intervalMs]);
+  }, [intervalMs, enabled]);
 
   return state;
 }

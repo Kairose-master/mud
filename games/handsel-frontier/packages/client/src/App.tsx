@@ -5,6 +5,9 @@ import { HUD } from "./hud/HUD";
 import { UIContext } from "./state";
 import { useHandselFeed } from "./handsel/feed";
 import { useKeyboardMovement } from "./useKeyboardMovement";
+import { useComponentValue } from "@latticexyz/react";
+import { singletonEntity } from "@latticexyz/store-sync/recs";
+import { useMUD } from "./MUDContext";
 import { isDirector, useWorldEvents } from "./director";
 import { DirectorOverlay } from "./hud/DirectorOverlay";
 
@@ -14,7 +17,12 @@ export const App = () => {
     const raw = new URLSearchParams(window.location.search).get("job");
     return raw && /^\d+$/.test(raw) ? BigInt(raw) : null;
   });
-  const feed = useHandselFeed();
+  // A simulated world has no Handsel text to fetch — and must not look like it tried.
+  const {
+    components: { WorldMeta },
+  } = useMUD();
+  const meta = useComponentValue(WorldMeta, singletonEntity);
+  const feed = useHandselFeed(30_000, meta?.environment !== "simulation");
   const ui = useMemo(() => ({ selectedJobId, select: setSelected, feed }), [selectedJobId, feed]);
   useKeyboardMovement();
   const events = useWorldEvents(10);
