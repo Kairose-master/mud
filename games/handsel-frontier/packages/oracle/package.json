@@ -1,0 +1,25 @@
+{
+  "name": "oracle",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "description": "Mirrors Handsel's public frontier feed into the Frontier world. Namespace-owner key required.",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "once": "tsx src/index.ts --once",
+    "test": "tsc --noEmit && vitest run"
+  },
+  "dependencies": {
+    "@latticexyz/common": "2.2.23",
+    "contracts": "workspace:*",
+    "dotenv": "^16.4.5",
+    "viem": "2.35.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "tsx": "^4.19.1",
+    "typescript": "5.4.2",
+    "vitest": "^2.1.2"
+  }
+}

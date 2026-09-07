@@ -1,0 +1,33 @@
+[profile.default]
+solc = "0.8.24"
+ffi = false
+optimizer = true
+optimizer_runs = 3000
+verbosity = 2
+src = "src"
+test = "test"
+out = "out"
+allow_paths = [
+  # pnpm symlinks to the project root's node_modules
+  "../../node_modules",
+]
+extra_output_files = [
+  "abi",
+  "evm.bytecode"
+]
+fs_permissions = [{ access = "read", path = "./"}]
+
+[fuzz]
+runs = 256
+
+[profile.garnet]
+eth_rpc_url = "https://rpc.garnetchain.com"
+
+[profile.redstone]
+eth_rpc_url = "https://rpc.redstonechain.com"
+
+# Handsel's V2 rehearsal deployment lives on Base Sepolia (chain 84532). The
+# game does NOT have to share a chain with the market — the oracle mirrors the
+# market over HTTP — but deploying next to it keeps one RPC and one faucet.
+[profile.base-sepolia]
+eth_rpc_url = "https://sepolia.base.org"

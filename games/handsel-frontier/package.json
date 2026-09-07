@@ -1,0 +1,28 @@
+{
+  "name": "handsel-frontier",
+  "private": true,
+  "description": "Handsel Frontier — a 3D onchain game (MUD) where the Handsel labor market is the map.",
+  "scripts": {
+    "build": "pnpm recursive run build",
+    "dev": "mprocs",
+    "dev:client": "pnpm --filter 'client' run dev",
+    "dev:contracts": "pnpm --filter 'contracts' dev",
+    "oracle": "pnpm --filter 'oracle' run start",
+    "foundry:up": "curl -L https://foundry.paradigm.xyz | bash && bash $HOME/.foundry/bin/foundryup",
+    "test": "pnpm recursive run test"
+  },
+  "devDependencies": {
+    "@latticexyz/cli": "2.2.23",
+    "@latticexyz/common": "2.2.23",
+    "@latticexyz/explorer": "2.2.23",
+    "@latticexyz/store-indexer": "2.2.23",
+    "@types/node": "^20",
+    "mprocs": "^0.7.3",
+    "shx": "^0.3.4",
+    "typescript": "5.4.2"
+  },
+  "engines": {
+    "node": "^20 || ^22",
+    "pnpm": "^9 || ^10"
+  }
+}
