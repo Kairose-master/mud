@@ -9,6 +9,7 @@ import * as THREE from "three";
 import { useMUD } from "../MUDContext";
 import { useUI } from "../state";
 import { chebyshev, SCOUT_RANGE } from "../layout";
+import { isDirector, useDirectorTarget, type WorldEvent } from "../director";
 import { Ground } from "./Ground";
 import { Beacon } from "./Beacon";
 import { Totem } from "./Totem";
@@ -18,7 +19,7 @@ import { PlayerAvatar } from "./PlayerAvatar";
  * Everything on the board is a live query against the synced World tables —
  * no mock rows, no placeholder beacons. An empty market draws an empty plain.
  */
-export function Scene() {
+export function Scene({ events }: { events: WorldEvent[] }) {
   const {
     components: { Position, Player, Bounty, Totem: TotemTable, Scout },
     network: { playerEntity },
@@ -112,7 +113,7 @@ export function Scene() {
         <PlayerAvatar key={p.entity} entity={p.entity} x={p.x} z={p.z} spark={p.spark} isMe={p.entity === playerEntity} />
       ))}
 
-      <CameraRig x={myPos?.x ?? 0} z={myPos?.z ?? 0} />
+      {isDirector() ? <DirectorRig events={events} /> : <CameraRig x={myPos?.x ?? 0} z={myPos?.z ?? 0} />}
     </group>
   );
 }
@@ -150,4 +151,26 @@ function CameraRig({ x, z }: { x: number; z: number }) {
       makeDefault
     />
   );
+}
+
+/**
+ * The filming camera: a slow orbit around the plaza, cutting to the tile of
+ * whatever just happened and holding there before drifting back out.
+ */
+function DirectorRig({ events }: { events: WorldEvent[] }) {
+  const { camera } = useThree();
+  const target = useDirectorTarget(events);
+  const look = useRef(new THREE.Vector3(0, 0.5, 0));
+  const angle = useRef(0);
+  const dist = useRef(30);
+
+  useFrame((_, dt) => {
+    angle.current += dt * 0.12;
+    look.current.lerp(new THREE.Vector3(target.x, 0.5, target.z), Math.min(1, dt * 1.5));
+    dist.current += (target.zoom - dist.current) * Math.min(1, dt * 1.2);
+    const d = dist.current;
+    camera.position.set(look.current.x + Math.cos(angle.current) * d, d * 0.75, look.current.z + Math.sin(angle.current) * d);
+    camera.lookAt(look.current);
+  });
+  return null;
 }

@@ -30,14 +30,14 @@ const button: React.CSSProperties = {
   fontSize: 13,
 };
 
-export function HUD() {
+export function HUD({ director = false }: { director?: boolean }) {
   return (
     <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
       <EnvironmentBanner />
-      <PlayerPanel />
+      {!director && <PlayerPanel />}
       <Leaderboard />
-      <SelectedBeacon />
-      <Controls />
+      {!director && <SelectedBeacon />}
+      {!director && <Controls />}
     </div>
   );
 }
@@ -65,6 +65,7 @@ function EnvironmentBanner() {
   const mismatch = feedMeta && (feedMeta.chainId !== meta.chainId || feedMeta.realMoney !== meta.realMoney);
   const age = Math.max(0, Math.floor(Date.now() / 1000 - Number(meta.syncedAt)));
   const real = meta.realMoney;
+  const simulated = meta.environment === "simulation";
   return (
     <div
       style={{
@@ -72,13 +73,22 @@ function EnvironmentBanner() {
         top: 12,
         left: "50%",
         transform: "translateX(-50%)",
-        borderColor: real ? "#8a2b2b" : "#2b6b4a",
-        maxWidth: 720,
+        borderColor: real ? "#8a2b2b" : simulated ? "#7a5a1a" : "#2b6b4a",
+        maxWidth: 760,
         textAlign: "center",
       }}
     >
-      <b>{real ? "REAL MONEY" : "testnet"}</b> · mirroring Handsel {meta.environment} (chain {meta.chainId}) from{" "}
-      <span style={{ opacity: 0.8 }}>{meta.source}</span> · {meta.beaconCount} beacons · {meta.totemCount} totems · synced {age}s ago
+      {simulated ? (
+        <>
+          <b style={{ color: "#ffd166" }}>SIMULATION</b> · a generated market, no real job, agent or money ·{" "}
+          <span style={{ opacity: 0.8 }}>{meta.source}</span> · {meta.beaconCount} beacons · {meta.totemCount} totems
+        </>
+      ) : (
+        <>
+          <b>{real ? "REAL MONEY" : "testnet"}</b> · mirroring Handsel {meta.environment} (chain {meta.chainId}) from{" "}
+          <span style={{ opacity: 0.8 }}>{meta.source}</span> · {meta.beaconCount} beacons · {meta.totemCount} totems · synced {age}s ago
+        </>
+      )}
       {real && <div style={{ color: "#ff9b9b" }}>These beacons stand for jobs that settle in real USDC. Scouting spends spark, never money.</div>}
       {mismatch && (
         <div style={{ color: "#ffb347" }}>
@@ -148,7 +158,7 @@ function Leaderboard() {
   const rows = useEntityQuery([Has(Player)])
     .map((entity) => ({ entity, ...getComponentValueStrict(Player, entity) }))
     .sort((a, b) => b.spark - a.spark)
-    .slice(0, 8);
+    .slice(0, 10);
   if (rows.length === 0) return null;
   return (
     <div style={{ ...panel, top: 12, right: 12, minWidth: 200 }}>

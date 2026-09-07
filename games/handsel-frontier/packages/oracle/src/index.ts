@@ -8,6 +8,7 @@ import { mudFoundry, garnet, redstone } from "@latticexyz/common/chains";
 import { baseSepolia } from "viem/chains";
 import IWorldAbi from "contracts/out/IWorld.sol/IWorld.abi.json" with { type: "json" };
 import { applyPlan, composeFromLegacy, emptySnapshot, normalizeFrontierFeed, planSync, type Frontier, type Snapshot } from "./frontier";
+import { applyPlanOnChain } from "./writer";
 
 /**
  * The Frontier oracle: mirrors Handsel's public feed into the World.
@@ -86,48 +87,7 @@ async function main() {
   const tick = async () => {
     const frontier = await fetchFrontier();
     const plan = planSync(snapshot, frontier);
-    const wait = (hash: Hex) => publicClient.waitForTransactionReceipt({ hash });
-
-    if (plan.bounties.length) {
-      for (let i = 0; i < plan.bounties.length; i += 40) {
-        const batch = plan.bounties.slice(i, i + 40);
-        const hash = await world.write.frontier__syncBounties([
-          batch.map((b) => BigInt(b.jobId)),
-          batch.map((b) => b.statusCode),
-          batch.map((b) => b.verificationCode),
-          batch.map((b) => b.rewardCents),
-        ]);
-        await wait(hash);
-      }
-    }
-    if (plan.totems.length) {
-      const hash = await world.write.frontier__syncTotems([
-        plan.totems.map((t) => ({
-          slot: t.slot,
-          creditScore: t.creditScore,
-          jobsDone: t.jobsDone,
-          earnedCents: BigInt(t.earnedCents),
-          x: t.tile.x,
-          z: t.tile.z,
-          name: t.name,
-        })),
-      ]);
-      await wait(hash);
-    }
-    if (plan.clearTotems) {
-      await wait(await world.write.frontier__clearTotems([plan.clearTotems.from, plan.clearTotems.to]));
-    }
-    await wait(
-      await world.write.frontier__syncMeta([
-        frontier.meta.chainId,
-        frontier.meta.realMoney,
-        frontier.meta.environment,
-        frontier.source,
-        (frontier.meta.contractAddress ?? "0x0000000000000000000000000000000000000000") as Hex,
-        frontier.beacons.length,
-        frontier.totems.length,
-      ]),
-    );
+    await applyPlanOnChain(world, publicClient, plan, frontier);
     snapshot = applyPlan(snapshot, frontier);
     console.log(
       `[oracle] ${new Date().toISOString()} ${frontier.meta.environment}/${frontier.meta.chainId} realMoney=${frontier.meta.realMoney} beacons=${frontier.beacons.length} (+${plan.bounties.length} written) totems=${frontier.totems.length} (+${plan.totems.length} written${plan.clearTotems ? `, cleared ${plan.clearTotems.from}-${plan.clearTotems.to}` : ""})`,

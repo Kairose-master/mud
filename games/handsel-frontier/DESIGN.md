@@ -149,7 +149,43 @@ and leaves vanished beacons standing so old scouts can still harvest.*
   넘는다(CLAUDE.md의 알려진 제약). HUD가 "Feed unreachable — 숫자는 체인에서,
   제목만 없음"을 정확히 보여준 것까지 확인했다.
 
-## 9. 다음
+## 9. 경제 시뮬레이터와 녹화 (2차)
+
+게임을 **경제 시뮬레이터**로 확장했다. 목적은 두 가지 — 전략이 시장 조건에
+따라 어떻게 갈리는지 숫자로 보는 것, 그리고 그 과정을 그대로 영상으로
+찍어 유튜브 콘텐츠로 만드는 것.
+
+- **합성 시장** (`packages/sim/src/market.ts`, 순수): 실제 시장과 같은
+  어휘의 잡 수명주기(Open → Accepted → Submitted → Completed | Refunded, 또는
+  Expired). 통과율은 채점 방식에 달렸고(CI > 자동 테스트 > 독립 채점 >
+  수동 리뷰), 합성 에이전트는 점수에 비례해 잡을 잡고 완료하면 수입과
+  점수가 오른다. 시드 고정이라 같은 에피소드는 같은 결과로 재생된다.
+  오라클과 **같은 writer**로 체인에 쓰기 때문에 실제 미러와 합성 시장이
+  갈라질 수 없다. 온체인 `environment = "simulation"`, HUD는 SIMULATION.
+- **봇 전략** (`bots.ts`, 순수): whale(최고 보상), verifier(기계 채점 우선),
+  bargain(가까운 싼 베팅 — 지급이 ⌊$⌋+2라 $1 잡은 1 걸고 3 받는다),
+  herd(스카우트 많은 곳), contrarian(적은 곳), random. 봇은 플레이어가 보는
+  것만 본다 — 시장 모델의 주사위는 못 본다. 걷다가 사거리에 들면
+  스카우트, 완료된 판돈은 항상 먼저 수확. 목표는 후보로 남아 있는 한
+  유지(sticky) — 반대편에 조금 더 큰 기둥이 뜰 때마다 걸음을 버리지 않는다.
+- **시나리오** (`scenario.ts`): steady / boom / bust / live. live는 진짜
+  Handsel 보드를 읽기 전용으로 미러하고 스카우트만 시뮬레이션한다.
+- **지표**: 틱마다 시장(게시/진행/완료/환불/만료, USD)과 spark 총량,
+  전략별 ROI·적중률·소각. 끝에 마크다운 표 — 영상 설명란에 그대로.
+- **녹화**: 클라이언트 `?director=1`은 자동 카메라(플라자 궤도 → 방금 일어난
+  일의 타일로 컷 → 복귀), 온체인 티커(컴포넌트 `update$`에서 직접 —
+  보드가 안 그리는 걸 티커가 말할 수 없다), 시장 패널. Playwright가 헤드리스
+  Chromium(SwiftShader)으로 1080p VP8/WebM을 찍는다. H.264 인코더가 없어
+  mp4는 안 만든다 — 유튜브는 webm을 받는다.
+- **실행**: `scripts/episode.sh <scenario>` 한 줄. Claude Code에서는
+  `.claude/skills/frontier-episode`.
+
+boom 40틱 드라이런에서 bargain(ROI 53×)이 whale(22×)을 이겼다 — 지급식이
+⌊$⌋+2라 싼 잡의 보너스 비중이 크고, 봇이 걸어서 도달해야 해서 가까운
+기둥이 유리하기 때문. 이게 경제 설계의 다음 조정 포인트다(보너스를 보상
+비례로 바꾸거나, 이동 비용을 두거나).
+
+## 10. 다음
 
 1. 배포 — Base Sepolia에 월드를 올리고 오라클을 상시 실행(Handsel 리허설과
    같은 체인).

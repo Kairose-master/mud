@@ -2,7 +2,8 @@ import { BOUNTY_STATUS_CODE, VERIFICATION_CODE, totemTile } from "./layout";
 
 /** The subset of Handsel's `GET /api/world/frontier` the oracle acts on. */
 export type FeedMeta = {
-  environment: "mainnet" | "testnet";
+  /** "simulation" is written only by packages/sim, never by the oracle. */
+  environment: "mainnet" | "testnet" | "simulation";
   chainId: number;
   realMoney: boolean;
   contractAddress: string | null;

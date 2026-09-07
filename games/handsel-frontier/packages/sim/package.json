@@ -1,28 +1,26 @@
 {
-  "name": "oracle",
+  "name": "sim",
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
   "type": "module",
-  "exports": {
-    "./frontier": "./src/frontier.ts",
-    "./layout": "./src/layout.ts",
-    "./writer": "./src/writer.ts"
-  },
-  "description": "Mirrors Handsel's public frontier feed into the Frontier world. Namespace-owner key required.",
+  "description": "Economy simulator for Handsel Frontier: a synthetic (or live-mirrored) market plus strategy bots, with a recording mode for episodes.",
   "scripts": {
     "start": "tsx src/index.ts",
-    "once": "tsx src/index.ts --once",
+    "episode": "tsx src/index.ts --record",
     "test": "tsc --noEmit && vitest run"
   },
   "dependencies": {
     "@latticexyz/common": "2.2.23",
+    "@latticexyz/recs": "2.2.23",
+    "@latticexyz/store-sync": "2.2.23",
     "contracts": "workspace:*",
-    "dotenv": "^16.4.5",
+    "oracle": "workspace:*",
     "viem": "2.35.1"
   },
   "devDependencies": {
     "@types/node": "^20",
+    "playwright": "^1.56.1",
     "tsx": "^4.19.1",
     "typescript": "5.4.2",
     "vitest": "^2.1.2"

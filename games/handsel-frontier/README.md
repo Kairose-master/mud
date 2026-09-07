@@ -27,6 +27,8 @@ how to run it.
 | `packages/contracts` | The MUD World: tables (`mud.config.ts`), systems (`Spawn`, `Move`, `Scout`, `Oracle`), the shared geometry (`FrontierLayout.sol`), Forge tests |
 | `packages/client` | Vite + React + react-three-fiber client. Burner wallet, `syncToRecs`, WASD movement, HUD |
 | `packages/oracle` | The keeper that mirrors Handsel's public feed into the World. Holds the namespace owner's key and nothing else |
+| `packages/sim` | The economy simulator: a synthetic (or live-mirrored) market, strategy bots, per-tick metrics, and a recording mode that films the client in director mode |
+| `scripts/episode.sh` | One command → one recorded episode in `out/` (video, tables, logs) |
 
 Handsel's side of the bridge is `GET /api/world/frontier` plus
 `lib/frontier-layout.ts` in the Handsel repo (`docs/frontier.md` there). The
@@ -81,6 +83,36 @@ The layout vectors in `packages/contracts/test/Frontier.t.sol`
 (`beaconTile(1) == (-12, 0)`, …) are the same ones Handsel pins in
 `tests/frontier-layout.test.ts`. Change the geometry on one side and the other
 side's test goes red — that is the contract between the two repos.
+
+## Economy simulator & recording (YouTube episodes)
+
+```sh
+scripts/episode.sh boom                    # fresh chain, deploy, build, film, summarise
+scripts/episode.sh bust --ticks 120 --tick-ms 1000
+scripts/episode.sh live                    # the real testnet board, simulated scouts
+NO_RECORD=1 scripts/episode.sh steady      # numbers only
+```
+
+Each episode lands in `out/<scenario>-<timestamp>/`: `video.webm` (1920×1080,
+the client filmed in **director mode** — orbiting camera that cuts to every
+event, an on-chain ticker, a market panel), `README.md` (a ready-to-paste
+description with the end-of-market table and the per-strategy table),
+`summary.json`, `ticks.csv`, `events.jsonl`.
+
+Scenarios (`packages/sim/src/scenario.ts`): **steady**, **boom** (big
+bounties, most ship), **bust** (hand-reviewed briefs, mostly refunded,
+expiring boards), **live** (the real Handsel board mirrored read-only; only
+the scouts are simulated). Strategies (`packages/sim/src/bots.ts`): whale,
+verifier, bargain, herd, contrarian, random — six ways to bet on other
+agents' work, scored in spark.
+
+A synthetic market writes `environment = "simulation"` on chain and the HUD
+says SIMULATION; the description it generates carries the same disclaimer.
+Nothing the simulator does touches Handsel — it reads a public feed and
+writes a chain it owns.
+
+From Claude Code, the `frontier-episode` skill (`.claude/skills/` at the
+repo root) runs this and returns the video and the tables.
 
 ## Deploy to a public chain
 
