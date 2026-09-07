@@ -141,3 +141,34 @@ describe("metrics", () => {
     expect(formatTable(t as unknown as Record<string, string | number>[])).toContain("| whale");
   });
 });
+
+import { botCaption, endCardHtml, introCaptions, marketCaption, newCaptionState, standingsCaption } from "../src/captions";
+
+describe("captions", () => {
+  const s = resolveScenario("bust");
+  it("open with the simulation disclaimer in both languages", () => {
+    expect(introCaptions(s, "ko")[0]).toMatch(/시뮬레이션/);
+    expect(introCaptions(s, "en")[0]).toMatch(/Simulation/);
+    expect(introCaptions(resolveScenario("live"), "en")[0]).toMatch(/real Handsel/);
+  });
+  it("narrate settlements, only the first stake and harvest, and only notable postings", () => {
+    const st = newCaptionState();
+    expect(marketCaption({ kind: "posted", jobId: 1, rewardCents: 500, verification: "ci_checks" }, st, "en")).toBeNull();
+    expect(marketCaption({ kind: "posted", jobId: 2, rewardCents: 5000, verification: "ci_checks" }, st, "en")).toMatch(/biggest/);
+    expect(marketCaption({ kind: "posted", jobId: 3, rewardCents: 5100, verification: "ci_checks" }, st, "en")).toBeNull();
+    expect(marketCaption({ kind: "refunded", jobId: 2, worker: "Sim Reader" }, st, "ko")).toMatch(/환불/);
+    expect(botCaption("scout", "whale-0", "2", st, "en")).toMatch(/First stake/);
+    expect(botCaption("scout", "whale-1", "3", st, "en")).toBeNull();
+    expect(botCaption("harvest", "whale-0", "2", st, "ko")).toMatch(/첫 수확/);
+  });
+  it("standings and end card name the leader and escape html", () => {
+    const bots = [
+      { name: "a", strategy: "whale" as const, spark: 20, startSpark: 10, scouts: 4, harvests: 2, burned: 1 },
+      { name: "b", strategy: "herd" as const, spark: 5, startSpark: 10, scouts: 5, harvests: 0, burned: 5 },
+    ];
+    expect(standingsCaption(bots, 15, 60, "en")).toMatch(/whale .* leads at \+100%.*herd .* trails at -50%/);
+    const html = endCardHtml({ ...s, name: "<bust>" }, bots, { completed: 1, refunded: 2, expired: 0, paidUsd: 10, refundedUsd: 20 }, "ko");
+    expect(html).toContain("&lt;bust&gt;");
+    expect(html).toMatch(/시뮬레이션/);
+  });
+});

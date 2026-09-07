@@ -17,6 +17,7 @@ import { decide, STRATEGIES, type BotView, type Strategy } from "./bots";
 import { formatTable, strategyTable, type BotLedger, type TickRow } from "./metrics";
 import { ANVIL_KEY, botKey, clientsFor, ensureAnvil, ensureDeployed, fund, ROOT, type Rpc } from "./chain";
 import { startRecording } from "./record";
+import { botCaption, endCardHtml, introCaptions, marketCaption, newCaptionState, standingsCaption, type Lang } from "./captions";
 
 /**
  * Handsel Frontier economy simulator.
@@ -44,10 +45,11 @@ type Args = {
   redeploy: boolean;
   /** Bot actions per tick — players act faster than the market settles. */
   steps: number;
+  lang: Lang;
 };
 
 function parseArgs(argv: string[]): Args {
-  const a: Args = { scenario: "steady", tickMs: 1500, record: false, port: 8545, clientUrl: "http://localhost:4173", out: join(ROOT, "out"), handselUrl: process.env.HANDSEL_URL ?? "https://handsel-nu.vercel.app", redeploy: false, steps: 3 };
+  const a: Args = { scenario: "steady", tickMs: 1500, record: false, port: 8545, clientUrl: "http://localhost:4173", out: join(ROOT, "out"), handselUrl: process.env.HANDSEL_URL ?? "https://handsel-nu.vercel.app", redeploy: false, steps: 3, lang: "ko" };
   for (let i = 0; i < argv.length; i++) {
     const k = argv[i], v = argv[i + 1];
     if (k === "--scenario") a.scenario = v, i++;
@@ -60,10 +62,11 @@ function parseArgs(argv: string[]): Args {
     else if (k === "--out") a.out = v, i++;
     else if (k === "--handsel-url") a.handselUrl = v, i++;
     else if (k === "--steps") a.steps = Number(v), i++;
+    else if (k === "--lang") a.lang = v === "en" ? "en" : "ko", i++;
     else if (k === "--record") a.record = true;
     else if (k === "--redeploy") a.redeploy = true;
     else if (k === "--help") {
-      console.log("--scenario steady|boom|bust|live  --ticks N --bots N --seed N --tick-ms MS --record --port 8545 --client-url URL --out DIR --handsel-url URL --redeploy --steps N");
+      console.log("--scenario steady|boom|bust|live  --ticks N --bots N --seed N --tick-ms MS --record --port 8545 --client-url URL --out DIR --handsel-url URL --redeploy --steps N --lang ko|en");
       process.exit(0);
     }
   }
@@ -155,6 +158,14 @@ async function main() {
 
   const recorder = args.record ? await startRecording({ clientUrl: args.clientUrl, outDir, title: `${scenario.name} · ${scenario.blurb}`, worldAddress }) : null;
 
+  // Captions: the intro plays over the first ticks, then events narrate themselves.
+  const capState = newCaptionState();
+  const intro = introCaptions(scenario, args.lang);
+  const say = (text: string | null, ms?: number) => {
+    if (text && recorder) recorder.caption(text, ms);
+    if (text) event({ kind: "caption", text });
+  };
+
   const beaconViews = () =>
     [...runQuery([Has(Bounty)])].map((e) => {
       const b = getComponentValueStrict(Bounty, e);
@@ -181,6 +192,11 @@ async function main() {
     else if (tick % 10 === 0) liveFrontier = null; // re-fetch the live board every 10 ticks
     await pushMarket(label(tick));
     for (const e of events) event({ ...e, kind: `market.${e.kind}`, tick });
+    if (tick <= intro.length) say(intro[tick - 1], Math.max(3000, args.tickMs - 200));
+    else {
+      const line = events.map((e) => marketCaption(e, capState, args.lang)).find((c) => c);
+      if (line) say(line);
+    }
 
     // 2. the bots act — up to `steps` transactions each, walking counts as one
     const beacons = beaconViews();
@@ -205,6 +221,7 @@ async function main() {
             b.ledger.harvests++;
             harvests++;
           }
+          if (action.kind === "scout" || action.kind === "harvest") say(botCaption(action.kind, b.name, action.jobId.toString(), capState, args.lang));
           event({ kind: `bot.${action.kind}`, tick, step, bot: b.name, strategy: b.strategy, ...("jobId" in action ? { jobId: action.jobId.toString() } : {}), ...("x" in action ? { x: action.x, z: action.z } : {}) });
         } catch (err) {
           b.target = null;
@@ -231,6 +248,8 @@ async function main() {
     ticks.push(row);
     appendFileSync(join(outDir, "ticks.csv"), Object.values(row).join(",") + "\n");
     if (tick % 10 === 0 || tick === scenario.ticks) log(`tick ${tick}/${scenario.ticks} · posted ${row.posted} open ${row.open} done ${row.completed} refunded ${row.refunded} · scouts ${scoutsPlaced} harvests ${harvests} · spark ${row.sparkSupply}`);
+
+    if (tick > intro.length && tick % 15 === 0 && tick !== scenario.ticks) say(standingsCaption(bots.map((b) => b.ledger), tick, scenario.ticks, args.lang), 4500);
 
     const spent = Date.now() - t0;
     if (spent < args.tickMs) await new Promise((res) => setTimeout(res, args.tickMs - spent));
@@ -273,6 +292,7 @@ async function main() {
   console.log("\n" + readme + "\n");
 
   if (recorder) {
+    await recorder.endCard(endCardHtml(scenario, bots.map((b) => b.ledger), last, args.lang));
     const video = await recorder.stop();
     log(`video ${video}`);
   }

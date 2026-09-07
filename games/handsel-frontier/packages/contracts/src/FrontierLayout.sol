@@ -22,7 +22,10 @@ library FrontierLayout {
 
   uint32 internal constant SPAWN_SPARK = 10;
   uint32 internal constant SCOUT_COST = 1;
-  uint32 internal constant HARVEST_BONUS = 2;
+  /** Added to the whole dollars of a completed bounty to form the pot every
+   *  scout of that bounty shares. Pari-mutuel: a crowd on one beacon splits
+   *  it, a lone scout keeps it, and nobody ever harvests less than 1. */
+  uint32 internal constant HARVEST_BONUS = 1;
 
   function abs32(int32 v) internal pure returns (int32) {
     return v < 0 ? -v : v;

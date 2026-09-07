@@ -21,4 +21,6 @@ interface IScoutSystem {
   function frontier__scout(uint256 jobId) external;
 
   function frontier__harvest(uint256 jobId) external;
+
+  function frontier__payout(uint32 rewardCents, uint32 scoutCount) external pure returns (uint32);
 }

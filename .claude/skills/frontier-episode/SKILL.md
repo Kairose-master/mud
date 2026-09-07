@@ -12,8 +12,23 @@ betting on a market, filmed in the client's director mode.
 
 ```sh
 cd games/handsel-frontier
-scripts/episode.sh <scenario> [--ticks N] [--tick-ms MS] [--bots N] [--seed N] [--steps N]
+scripts/episode.sh <scenario> [--ticks N] [--tick-ms MS] [--bots N] [--seed N] [--steps N] [--lang ko|en]
 ```
+
+Captions (intro with the simulation disclaimer, first stake/harvest,
+settlements, standings every 15 ticks, a closing ranking card) are generated
+from the episode's own events and burned into the recording. Korean by
+default.
+
+For evidence rather than a story, run a batch — many seeds, no camera:
+
+```sh
+cd packages/sim && pnpm batch -- --scenario bust --runs 8 --ticks 60
+```
+
+It writes `out/batch-<scenario>-<stamp>/summary.md` (mean / min / max return
+and wins per strategy). Quote that table when the user asks which strategy
+is actually better; quote a single episode's table only as that episode.
 
 Scenarios: `steady` (calm market), `boom` (big bounties, most ship), `bust`
 (hand-reviewed briefs, mostly refunded), `live` (the real Handsel board at

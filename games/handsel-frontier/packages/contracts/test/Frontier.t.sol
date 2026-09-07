@@ -202,7 +202,7 @@ contract FrontierTest is MudTest {
     seedBounty(42, BountyStatus.Completed, 1250);
     vm.prank(alice);
     world.frontier__harvest(42);
-    // 9 + 12 (whole dollars) + 2 bonus
+    // 9 + (12 whole dollars + 1 bonus) / 1 scout
     assertEq(Player.getSpark(key(alice)), 9 + 12 + FrontierLayout.HARVEST_BONUS);
     assertEq(Player.getHarvests(key(alice)), 1);
 
@@ -216,6 +216,33 @@ contract FrontierTest is MudTest {
     vm.prank(bob);
     vm.expectRevert(abi.encodeWithSignature("NotScouted()"));
     world.frontier__harvest(42);
+  }
+
+  function testPotIsSplitAmongScoutsAndNeverBelowOne() public {
+    assertEq(world.frontier__payout(1250, 1), 13);
+    assertEq(world.frontier__payout(1250, 2), 6);
+    assertEq(world.frontier__payout(1250, 40), 1); // 13 / 40 rounds to 0 → floor of 1
+    assertEq(world.frontier__payout(50, 1), 1); // a 50-cent job pays the bonus alone
+    assertEq(world.frontier__payout(1250, 0), 13); // defensive: never divide by zero
+
+    seedBounty(42, BountyStatus.Open, 1250);
+    vm.prank(alice);
+    world.frontier__spawn();
+    vm.prank(bob);
+    world.frontier__spawn();
+    walkTo(alice, -2, -13);
+    walkTo(bob, -2, -13);
+    vm.prank(alice);
+    world.frontier__scout(42);
+    vm.prank(bob);
+    world.frontier__scout(42);
+    seedBounty(42, BountyStatus.Completed, 1250);
+    vm.prank(alice);
+    world.frontier__harvest(42);
+    vm.prank(bob);
+    world.frontier__harvest(42);
+    assertEq(Player.getSpark(key(alice)), 9 + 6);
+    assertEq(Player.getSpark(key(bob)), 9 + 6);
   }
 
   function testCancelledBountyPaysNothingAndCannotBeScouted() public {

@@ -108,6 +108,20 @@ the scouts are simulated). Strategies (`packages/sim/src/bots.ts`): whale,
 verifier, bargain, herd, contrarian, random — six ways to bet on other
 agents' work, scored in spark.
 
+Captions: the recorder narrates the episode — an intro (with the simulation
+disclaimer), the first stake and harvest, notable postings, every settlement,
+a standings line every 15 ticks, and a closing card with the strategy
+ranking. Korean by default, `--lang en` for English.
+
+Batches: `pnpm --filter sim batch -- --scenario bust --runs 8 --ticks 60`
+runs one scenario over many seeds (each on its own fresh anvil, no camera)
+and writes `out/batch-<scenario>-<stamp>/summary.md` with mean / min / max
+return and win count per strategy — one seed is a story, a batch is evidence.
+
+Payout is pari-mutuel: a completed beacon's pot (whole dollars + 1) is split
+among its scouts, never below 1 — so following the crowd costs, and standing
+alone on a big bounty pays.
+
 A synthetic market writes `environment = "simulation"` on chain and the HUD
 says SIMULATION; the description it generates carries the same disclaimer.
 Nothing the simulator does touches Handsel — it reads a public feed and

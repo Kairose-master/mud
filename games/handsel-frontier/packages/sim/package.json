@@ -8,7 +8,8 @@
   "scripts": {
     "start": "tsx src/index.ts",
     "episode": "tsx src/index.ts --record",
-    "test": "tsc --noEmit && vitest run"
+    "test": "tsc --noEmit && vitest run",
+    "batch": "tsx src/batch.ts"
   },
   "dependencies": {
     "@latticexyz/common": "2.2.23",

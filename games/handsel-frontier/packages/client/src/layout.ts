@@ -11,7 +11,13 @@ export const SPAWN_RING_RADIUS = 2;
 export const SCOUT_RANGE = 2;
 export const SPAWN_SPARK = 10;
 export const SCOUT_COST = 1;
-export const HARVEST_BONUS = 2;
+export const HARVEST_BONUS = 1;
+
+/** Mirrors ScoutSystem.payout: the pot (whole dollars + bonus) split among every scout, never below 1. */
+export function payoutOf(rewardCents: number, scoutCount: number): number {
+  const pot = Math.floor(rewardCents / 100) + HARVEST_BONUS;
+  return Math.max(1, Math.floor(pot / Math.max(1, scoutCount)));
+}
 
 export function chebyshev(ax: number, az: number, bx: number, bz: number): number {
   return Math.max(Math.abs(ax - bx), Math.abs(az - bz));

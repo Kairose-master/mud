@@ -44,9 +44,10 @@ contract ScoutSystem is System {
     Bounty.setScoutCount(jobId, b.scoutCount + 1);
   }
 
-  /** Pays out once the mirrored status says Completed: one spark per whole
-   *  dollar of the bounty, plus a fixed bonus. Distance no longer matters —
-   *  the bet was placed in person, the payout is a receipt. */
+  /** Pays out once the mirrored status says Completed. The pot is one spark
+   *  per whole dollar of the bounty plus HARVEST_BONUS, split evenly among
+   *  everyone who scouted it (pari-mutuel), never below 1. Distance no longer
+   *  matters — the bet was placed in person, the payout is a receipt. */
   function harvest(uint256 jobId) public {
     bytes32 id = bytes32(uint256(uint160(_msgSender())));
     PlayerData memory p = Player.get(id);
@@ -60,8 +61,15 @@ contract ScoutSystem is System {
     if (Scout.getHarvested(jobId, id)) revert AlreadyHarvested();
 
     Scout.setHarvested(jobId, id, true);
-    Player.setSpark(id, p.spark + b.rewardCents / 100 + FrontierLayout.HARVEST_BONUS);
+    Player.setSpark(id, p.spark + payout(b.rewardCents, b.scoutCount));
     Player.setHarvests(id, p.harvests + 1);
+  }
+
+  /** Exposed for the client and the bots, which mirror it in TypeScript. */
+  function payout(uint32 rewardCents, uint32 scoutCount) public pure returns (uint32) {
+    uint32 pot = rewardCents / 100 + FrontierLayout.HARVEST_BONUS;
+    uint32 share = pot / (scoutCount == 0 ? 1 : scoutCount);
+    return share < 1 ? 1 : share;
   }
 
   function isLive(BountyStatus s) internal pure returns (bool) {

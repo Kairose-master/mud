@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useEntityQuery } from "@latticexyz/react";
 import { Has, getComponentValueStrict } from "@latticexyz/recs";
 import { useMUD } from "../MUDContext";
@@ -17,11 +18,59 @@ const panel: React.CSSProperties = {
 
 const TONE: Record<WorldEvent["tone"], string> = { good: "#3ddc97", bad: "#ff8a8a", neutral: "#c7cde0", gold: "#ffd166" };
 
-/** What the recorder sees on top of the board: title, market panel, ticker. */
+declare global {
+  interface Window {
+    /** The recorder narrates through these: a caption line, and a closing card. */
+    __frontierCaption?: (text: string | null) => void;
+    __frontierEndCard?: (html: string | null) => void;
+  }
+}
+
+/** What the recorder sees on top of the board: title, market panel, ticker, captions. */
 export function DirectorOverlay({ events }: { events: WorldEvent[] }) {
   const title = directorTitle();
+  const [caption, setCaption] = useState<string | null>(null);
+  const [endCard, setEndCard] = useState<string | null>(null);
+  useEffect(() => {
+    window.__frontierCaption = (t) => setCaption(t);
+    window.__frontierEndCard = (h) => setEndCard(h);
+    return () => {
+      delete window.__frontierCaption;
+      delete window.__frontierEndCard;
+    };
+  }, []);
   return (
     <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+      {caption && (
+        <div
+          style={{
+            position: "absolute",
+            left: "50%",
+            bottom: 150,
+            transform: "translateX(-50%)",
+            maxWidth: 1100,
+            padding: "12px 22px",
+            background: "rgba(7, 9, 15, 0.78)",
+            border: "1px solid #3a4160",
+            borderRadius: 12,
+            fontSize: 30,
+            fontWeight: 600,
+            lineHeight: 1.3,
+            textAlign: "center",
+            color: "#ffffff",
+            textShadow: "0 2px 6px #000",
+            zIndex: 30,
+          }}
+        >
+          {caption}
+        </div>
+      )}
+      {endCard && (
+        <div
+          style={{ position: "absolute", inset: 0, background: "rgba(7, 9, 15, 0.92)", zIndex: 40, display: "flex", alignItems: "center", justifyContent: "center" }}
+          dangerouslySetInnerHTML={{ __html: endCard }}
+        />
+      )}
       <div style={{ ...panel, top: 12, left: 12, maxWidth: 420 }}>
         <div style={{ fontWeight: 800, fontSize: 20 }}>Handsel Frontier</div>
         <div style={{ opacity: 0.8, fontSize: 13 }}>{title ?? "the labor market as a map"}</div>

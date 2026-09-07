@@ -75,8 +75,9 @@ Expired. `Verification`: ManualReview·AutoGradedTests·IndependentGrader·CiChe
 - `scout(jobId)` — 기둥이 존재하고 살아 있어야(Open/Accepted/Submitted),
   체비쇼프 거리 ≤ 2, 같은 기둥 중복 불가, spark ≥ 1. spark −1, `scoutCount`+1.
 - `harvest(jobId)` — 미러된 상태가 `Completed`이고 내가 스카우트했고 아직
-  수확 안 했을 때. spark += ⌊보상 달러⌋ + 2. 거리 무관 — 베팅은 현장에서,
-  수령은 영수증으로.
+  수확 안 했을 때. **판돈 = ⌊보상 달러⌋ + 1을 그 기둥의 스카우트 수로 나눈
+  몫(최소 1)** — 파리뮤추얼. 혼자 걸면 다 갖고, 군중이 몰리면 나눠 갖는다.
+  거리 무관 — 베팅은 현장에서, 수령은 영수증으로.
 - `OracleSystem.*` — `openAccess: false`. 네임스페이스 소유자만. `syncBounties`는
   타일을 **컨트랙트가** 계산하고 기존 `scoutCount`를 보존한다.
 
@@ -180,10 +181,19 @@ and leaves vanished beacons standing so old scouts can still harvest.*
 - **실행**: `scripts/episode.sh <scenario>` 한 줄. Claude Code에서는
   `.claude/skills/frontier-episode`.
 
-boom 40틱 드라이런에서 bargain(ROI 53×)이 whale(22×)을 이겼다 — 지급식이
-⌊$⌋+2라 싼 잡의 보너스 비중이 크고, 봇이 걸어서 도달해야 해서 가까운
-기둥이 유리하기 때문. 이게 경제 설계의 다음 조정 포인트다(보너스를 보상
-비례로 바꾸거나, 이동 비용을 두거나).
+**밸런스 1차 (2차 작업에서)**: 처음 지급식(⌊$⌋+2, 스카우트 수 무관)에서는
+bargain이 모든 시나리오에서 압승했다 — 싼 잡의 보너스 비중이 크고, 봇이
+걸어서 도달해야 해서 가까운 기둥이 유리하니까. 그래서 **파리뮤추얼**로
+바꿨다: 판돈(⌊$⌋+1)을 그 기둥의 스카우트가 나눠 갖는다. 이제 herd는
+구조적으로 손해, contrarian은 구조적으로 이득, whale은 큰 판돈을 나눠도
+남는다. 배치 실행(`pnpm batch`)으로 시드 여러 개의 전략별 평균/최소/최대
+수익률을 뽑아 확인한다 — 한 시드의 결과는 이야기지, 증거가 아니다.
+
+**자막과 엔드카드**: 녹화 중 시뮬레이터가 `captions.ts`(순수, ko/en)로
+챕터 자막을 만들어 페이지에 주입한다 — 인트로 4줄(시뮬레이션 고지 포함),
+첫 스카우트/첫 수확, 눈에 띄는 게시, 완료/환불/만료, 15틱마다 순위 한 줄,
+끝에 전략 순위표 엔드카드. 자막은 실제 일어난 이벤트에서만 나온다 — 시장
+모델의 주사위는 자막도 못 본다.
 
 ## 10. 다음
 

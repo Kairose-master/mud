@@ -4,7 +4,7 @@ import { Has, getComponentValueStrict } from "@latticexyz/recs";
 import { decodeEntity, encodeEntity, singletonEntity } from "@latticexyz/store-sync/recs";
 import { useMUD } from "../MUDContext";
 import { useUI } from "../state";
-import { chebyshev, SCOUT_RANGE, STATUS_LABEL, STATUS_LIVE, STATUS_COMPLETED, VERIFICATION_LABEL, SCOUT_COST, HARVEST_BONUS } from "../layout";
+import { chebyshev, SCOUT_RANGE, STATUS_LABEL, STATUS_LIVE, STATUS_COMPLETED, VERIFICATION_LABEL, SCOUT_COST, payoutOf } from "../layout";
 import { HANDSEL_URL, jobUrl } from "../handsel/feed";
 
 const panel: React.CSSProperties = {
@@ -202,7 +202,8 @@ function SelectedBeacon() {
   const inRange = dist <= SCOUT_RANGE;
   const spawned = !!me && me.spawnedAt !== 0n;
   const usd = bounty.rewardCents / 100;
-  const payout = Math.floor(usd) + HARVEST_BONUS;
+  // What one more scout would take home if it completed now; what a staked scout takes home today.
+  const payout = myScout ? payoutOf(bounty.rewardCents, bounty.scoutCount) : payoutOf(bounty.rewardCents, bounty.scoutCount + 1);
 
   const run = async (fn: () => Promise<void>) => {
     setBusy(true);
@@ -267,7 +268,7 @@ function SelectedBeacon() {
           ? "Spawn first."
           : live && !myScout
             ? inRange
-              ? `In range (${dist}). Stake ${SCOUT_COST} spark that this job gets completed; pays ${payout} if Handsel reports it Completed, nothing if it is cancelled or refunded.`
+              ? `In range (${dist}). Stake ${SCOUT_COST} spark that this job gets completed; the pot (whole dollars + 1) is split among its scouts — ${payout} for you at today's count — and pays nothing if it is cancelled or refunded.`
               : `Walk within ${SCOUT_RANGE} tiles to scout (you are ${dist === Infinity ? "?" : dist} away).`
             : null}
       </div>
